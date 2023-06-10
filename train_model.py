@@ -120,10 +120,10 @@ if __name__ == '__main__':
 
 
 
-    if not "model_metrics.csv" in os.listdir():
+    if not "model_metrics.csv" in os.listdir("Datasets"):
 
-        metrics_df.to_csv("model_metrics.csv", sep=';', index=False, header=True, mode='w')
+        metrics_df.to_csv("Datasets/model_metrics.csv", sep=';', index=False, header=True, mode='w')
 
     else:
 
-        metrics_df.to_csv("model_metrics.csv", sep=';', index=False, header=False, mode='a')
+        metrics_df.to_csv("Datasets/model_metrics.csv", sep=';', index=False, header=False, mode='a')

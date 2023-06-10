@@ -9,6 +9,7 @@ from multiprocessing import Pool
 from functools import partial
 
 import sys
+import os
 
 
 
@@ -226,7 +227,7 @@ work_cutoff = float(sys.argv[1])
 
 # 1 é viagem a trabalho
 
-df = pd.read_table("yelp_users_batches_" + str(work_cutoff) + ".csv", sep=';')
+df = pd.read_table("Datasets/yelp_users_batches_" + str(work_cutoff) + ".csv", sep=';')
 
 index_predictions = pd.read_table("id_predictions.csv", sep=',').drop('Unnamed: 0', axis=1)
 
@@ -270,13 +271,13 @@ pool.join()
 
 user_trips_df = pd.concat(user_trips).dropna()
 
-user_trips_df.to_csv("user_trips_table_" + str(work_cutoff) + '.csv', sep=';')
+#user_trips_df.to_csv("user_trips_table_" + str(work_cutoff) + '.csv', sep=';')
 
 ## adicionando dados da saída
-if not "user_trips_table_" + str(work_cutoff) + '.csv' in os.listdir():
+if not "user_trips_table_" + str(work_cutoff) + '.csv' in os.listdir("Datasets"):
 
-    metrics_df.to_csv("user_trips_table_" + str(work_cutoff) + '.csv', sep=';', index=False, header=True, mode='w')
+    user_trips_df.to_csv("Dataset/user_trips_table_" + str(work_cutoff) + '.csv', sep=';', index=False, header=True, mode='w')
 
 else:
 
-    metrics_df.to_csv("user_trips_table_" + str(work_cutoff) + '.csv', sep=';', index=False, header=False, mode='a')
+    user_trips_df.to_csv("Dataset/user_trips_table_" + str(work_cutoff) + '.csv', sep=';', index=False, header=False, mode='a')
