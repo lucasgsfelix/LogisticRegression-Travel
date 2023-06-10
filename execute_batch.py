@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
 	batches = np.array_split(pandas_df['user_id'].unique(), 100)
 
-	cut_offs = [cut_off/100 for cut_off in range(50, 105, 5)]
+	cut_offs = [cut_off/100 for cut_off in range(0, 105, 5)]
 
 	for cut_off in tqdm.tqdm(cut_offs):
 
@@ -44,7 +44,13 @@ if __name__ == '__main__':
 
 			subprocess.call("python generate_travels_table.py " + str(cut_off), shell=True)
 
-		subprocess.call("python train_model.py " + str(cut_off), shell=True)
+		try:
+			
+			subprocess.call("python train_model.py " + str(cut_off), shell=True)
+		
+		except:
+			
+			pass
 
 
 
