@@ -114,7 +114,7 @@ def retrieve_features(user):
 
     # work or leiusre
     # 1 to work, 0 to leisure
-    trip_dict['trip_type'] = df_trip['trip_type'].values[0]
+    #trip_dict['trip_type'] = df_trip['trip_type'].values[0]
 
     trip_dict['average_start'] = df_trip['stars'].mean()
 
@@ -193,7 +193,7 @@ def evaluate_user_travels(user):
 
     sum_columns = [str(value) for value in range(1, 13)] + ['Hotel', 'Attraction', 'Restaurant', 'Automotive']
     
-    columns_to_drop = ['trip_type'] + sum_columns
+    columns_to_drop = sum_columns
 
     for date in user_trips_df['date'].values:
 
@@ -208,7 +208,7 @@ def evaluate_user_travels(user):
         past_mean_df['qtde_past_trips'] = len(user_trips_df[query]) - 1
 
         # quantidade de viagens feitas anteriormente que eram a trabalho
-        past_mean_df['past_work_travel'] = user_trips_df[user_trips_df['date'] < date]['trip_type'].sum()
+        #past_mean_df['past_work_travel'] = user_trips_df[user_trips_df['date'] < date]['trip_type'].sum()
 
         
         past_mean_df = past_mean_df.join(past_sum_df)
@@ -218,7 +218,7 @@ def evaluate_user_travels(user):
 
     past_trips_df = pd.concat(new_features_list).rename(columns=new_names)
 
-    return user_trips_df.reset_index(drop=True).join(past_trips_df).reset_index(drop=True)
+    return user_trips_df.reset_index(drop=True).join(past_trips_df.reset_index(drop=True))
 
 
 
@@ -237,7 +237,7 @@ df['date'] = pd.to_datetime(df['date'])
 
 df_trip_types = generate_trip_type_dataframe(df, work_cutoff)
 
-df = df.set_index('trip_id').join(df_trip_types[['trip_id', 'trip_type']].set_index('trip_id')).reset_index()
+df = df.set_index('trip_id').join(df_trip_types[['trip_id', 'porc']].set_index('trip_id')).reset_index()
 
 df = standard_categories(df)
 
@@ -269,7 +269,7 @@ pool.close()
 
 pool.join()
 
-user_trips_df = pd.concat(user_trips).dropna()
+user_trips_df = pd.concat(user_trips).fillna(0)
 
 #user_trips_df.to_csv("user_trips_table_" + str(work_cutoff) + '.csv', sep=';')
 
