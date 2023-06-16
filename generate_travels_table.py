@@ -66,9 +66,9 @@ def generate_trip_type_dataframe(df, work_porc):
 
     df_trip_types['porc'] = df_trip_types['qtde_work']/df_trip_types['qtde_places']
 
-    df_trip_types['trip_type'] = 0
+    #df_trip_types['trip_type'] = 0
 
-    df_trip_types.loc[df_trip_types['porc'] >= work_porc, 'trip_type'] = 1
+    #df_trip_types.loc[df_trip_types['porc'] >= work_porc, 'trip_type'] = 1
 
     return df_trip_types
 
