@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
 	print("Quantidade de linhas depois do dropnat: ", len(pandas_df))
 
-	batches = np.array_split(pandas_df['user_id'].unique(), 1)
+	batches = np.array_split(pandas_df['user_id'].unique(), 100)
 
 	try:
 
