@@ -351,8 +351,8 @@ user_trips_df = pd.concat(user_trips).fillna(0)
 ## adicionando dados da saída
 if not "user_trips_table_" + str(work_cutoff) + '.csv' in os.listdir("Datasets"):
 
-    user_trips_df.to_csv("Dataset/user_trips_table_" + str(work_cutoff) + '.csv', sep=';', index=False, header=True, mode='w')
+    user_trips_df.to_csv("Datasets/user_trips_table_" + str(work_cutoff) + '.csv', sep=';', index=False, header=True, mode='w')
 
 else:
 
-    user_trips_df.to_csv("Dataset/user_trips_table_" + str(work_cutoff) + '.csv', sep=';', index=False, header=False, mode='a')
+    user_trips_df.to_csv("Datasets/user_trips_table_" + str(work_cutoff) + '.csv', sep=';', index=False, header=False, mode='a')
