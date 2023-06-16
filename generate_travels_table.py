@@ -12,6 +12,43 @@ import sys
 import os
 
 
+def generate_cities_dataframe(df):
+
+    # '% turismo', '% trabalho'
+
+    df_city = df[['user_visited_city', 'category', 'categories', 'porc']]
+    
+    # quantidade de lociais visitados em uma cidade
+    
+    columns_rename = {'user_visited_city': 'qtde_visitas_cidade', 'index': 'user_visited_city'}
+    
+    df_count = pd.DataFrame(df['user_visited_city'].value_counts()).reset_index().rename(columns=columns_rename)
+    
+    # quantidade de locais por cateogria
+    
+    df_amount = df_city.groupby(['user_visited_city', 'category']).count().reset_index()
+    
+    df_amount = pd.pivot_table(data=df_amount, values=['categories'],
+                               index='user_visited_city', columns='category').fillna(0)
+    
+    df_amount.columns = df_amount.columns.droplevel(0)
+    
+    df_amount = df_amount.reset_index()
+    
+    # % de visitas turismo, trabalho
+    
+    df_porc = df_city.groupby("user_visited_city").mean().reset_index().rename(columns={'porc': 'perc_trabalho'})
+    
+    df_porc['perc_turismo'] = 1 - df_porc['perc_trabalho']
+    
+    df_cities = df_porc.set_index('user_visited_city').join(df_amount.set_index('user_visited_city'))
+    
+    df_cities = df_cities.join(df_count.set_index('user_visited_city'))
+    
+    df_cities = df_cities.fillna(0)
+
+    return df_cities
+
 
 def generate_trip_type_dataframe(df, work_porc):
 
@@ -48,9 +85,7 @@ def calculate_distance(row, suffix):
 
 
 
-def retrieve_features(user):
-
-    df_trip = df[df['trip_id'] == user]
+def retrieve_features(df_trip):
 
     trip_dict = {}
     
@@ -94,8 +129,23 @@ def retrieve_features(user):
 
     df_trip['longitude_shift'] = df_trip['longitude'].shift(-1)
 
-    columns = ['latitude', 'longitude', 'latitude_shift', 'longitude_shift']
 
+    columns = ['latitude', 'longitude', 'latitude_home', 'longitude_home']
+
+    try:
+    
+        df_trip['distance_hometown'] = df_trip[columns].apply(lambda x: calculate_distance(x, '_home'), axis=1)
+    
+    except:
+        
+        df_trip['distance_hometown'] = 0
+    
+    
+    trip_dict['distance_hometown'] = np.mean(df_trip['distance_hometown'])
+    
+
+    columns = ['latitude', 'longitude', 'latitude_shift', 'longitude_shift']
+    
     try:
     
         df_trip['distance'] = df_trip[columns].apply(lambda x: calculate_distance(x, '_shift'), axis=1)
@@ -103,18 +153,18 @@ def retrieve_features(user):
     except:
         
         df_trip['distance'] = 0
+    
 
     trip_dict['mean_distance'] = np.mean(df_trip['distance'])
 
     trip_dict['radius_gyration'] = np.mean(np.abs(df_trip['distance'] - trip_dict['mean_distance']))
     
-    trip_dict['user_id'] = user
+    trip_dict['user_id'] = df_trip['user_id'].values[0]
 
     trip_dict['trip_id'] = df_trip['trip_id'].values[0]
 
     # work or leiusre
     # 1 to work, 0 to leisure
-    #trip_dict['trip_type'] = df_trip['trip_type'].values[0]
 
     trip_dict['average_start'] = df_trip['stars'].mean()
 
@@ -124,13 +174,13 @@ def retrieve_features(user):
     # categorias visitadas
     for category in ['Restaurant', 'Hotel', 'Automotive', 'Attraction']:
         
-        trip_dict[category] = len(df_trip[df_trip['category'] == category])
+        trip_dict['trip_' + category] = len(df_trip[df_trip['category'] == category])
 
     trip_month = df_trip['date'].dt.month.min()
 
     columns = ['latitude', 'longitude', 'latitude_hotel', 'longitude_hotel']
 
-    if trip_dict['Hotel'] > 1:
+    if trip_dict['trip_Hotel'] > 1:
 
         df_trip['latitude_hotel'] = df_trip[df_trip['categories'].str.contains('hotel') == True]['latitude'].values[0]
 
@@ -156,6 +206,9 @@ def retrieve_features(user):
 
     # desvio padrão entre as horas
     trip_dict['check_in_time_dp'] = np.std(df_trip['date'].dt.hour, ddof=1)
+
+    # porcentagem de chances de trabalho
+    trip_dict['porc'] = df_trip['porc'].max()
     
     # Mẽs da viagem
     for month in range(1, 13):
@@ -163,9 +216,19 @@ def retrieve_features(user):
         trip_dict[str(month)] = 0
 
     trip_dict[str(trip_month)] = 1
+
+    
+    # adicionando dados históricos da cidade
+    current_city = df_trip['user_visited_city'].unique()
+
+    mean_visits = df_trip[df_trip['user_visited_city'].isin(current_city)].mean()
+
+    
+    for column in df_cities.columns:
+
+        trip_dict[column] = float(mean_visits[column])
     
     return trip_dict
-
 
 def standard_categories(df):
 
@@ -181,9 +244,7 @@ def standard_categories(df):
     return df
 
 
-def evaluate_user_travels(user):
-
-    user_trips_df = df_trips[df_trips['user_id'] == user]
+def evaluate_user_travels(user_trips_df):
     
     qtde_trips = len(user_trips_df['trip_id'].unique())
 
@@ -191,9 +252,10 @@ def evaluate_user_travels(user):
 
     new_features_list, new_names = [], {column: column + '_new_travel' for column in user_trips_df.columns}
 
-    sum_columns = [str(value) for value in range(1, 13)] + ['Hotel', 'Attraction', 'Restaurant', 'Automotive']
+    sum_columns = [str(value) for value in range(1, 13)] + ['trip_Hotel', 'trip_Attraction', 
+                                                            'trip_Restaurant', 'trip_Automotive']
     
-    columns_to_drop = sum_columns
+    columns_to_drop = sum_columns + ['porc']
 
     for date in user_trips_df['date'].values:
 
@@ -203,12 +265,13 @@ def evaluate_user_travels(user):
         past_mean_df = user_trips_df[query].drop('date', axis=1).mean().to_frame().T.drop(columns_to_drop, axis=1)
 
         past_sum_df = user_trips_df[user_trips_df['date'] < date][sum_columns].sum().to_frame().T
+    
 
         # quantidade de viagens feitas anteriormente, desconsideramos a viagem atual
         past_mean_df['qtde_past_trips'] = len(user_trips_df[query]) - 1
 
         # quantidade de viagens feitas anteriormente que eram a trabalho
-        #past_mean_df['past_work_travel'] = user_trips_df[user_trips_df['date'] < date]['trip_type'].sum()
+        past_mean_df['past_work_travel'] = user_trips_df[user_trips_df['date'] < date]['porc'].sum()
 
         
         past_mean_df = past_mean_df.join(past_sum_df)
@@ -235,14 +298,20 @@ predictions = np.load("y_pred_all.npy")
 
 df['date'] = pd.to_datetime(df['date'])
 
+df = df.rename(columns={'home_lat': 'latitude_home', 'home_lon': 'longitude_home'})
+
 df_trip_types = generate_trip_type_dataframe(df, work_cutoff)
 
 df = df.set_index('trip_id').join(df_trip_types[['trip_id', 'porc']].set_index('trip_id')).reset_index()
 
-df = standard_categories(df)
+df_cities = generate_cities_dataframe(df)
+
+df = df.set_index("user_visited_city").join(df_cities).reset_index()
+
+df.loc[df['qtde_visitas_cidade'] == 1, 'perc_trabalho'] = 0
+df.loc[df['qtde_visitas_cidade'] == 1, 'perc_turismo'] = 0
 
 df = df.dropna(subset=['user_id', 'trip_id'])
-
 
 #################### Gerando features das viagens
 pool = Pool(processes=50)
