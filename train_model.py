@@ -112,18 +112,24 @@ if __name__ == '__main__':
 
     df = pd.read_table("user_trips_table_" + cut_off + ".csv", sep=';')
 
-    columns_to_drop = ['trip_type', 'user_id','trip_id', 'date']
+    columns_to_drop = ['trip_type', 'user_id','trip_id', 'date', 'porc']
 
-    folds = split_data_k_folds(df.drop(columns_to_drop, axis=1), df['trip_type'], 5, False)
+    cut_offs = [cut_off/100 for cut_off in range(0, 105, 5)]
+    
+    for cutoff in cut_offs:
 
-    metrics_df = train_model(folds, cut_off)
+        df['trip_type'] = 0
 
+        df.loc[test_df['porc'] >= cutoff, 'trip_type'] = 1
 
-
-    if not "model_metrics.csv" in os.listdir("Datasets"):
-
-        metrics_df.to_csv("Datasets/model_metrics.csv", sep=';', index=False, header=True, mode='w')
-
-    else:
-
-        metrics_df.to_csv("Datasets/model_metrics.csv", sep=';', index=False, header=False, mode='a')
+        folds = split_data_k_folds(df.drop(columns_to_drop, axis=1), df['trip_type'], 5, False)
+    
+        metrics_df = train_model(folds, cut_off)
+    
+        if not "model_metrics.csv" in os.listdir("Datasets"):
+    
+            metrics_df.to_csv("Datasets/model_metrics.csv", sep=';', index=False, header=True, mode='w')
+    
+        else:
+    
+            metrics_df.to_csv("Datasets/model_metrics.csv", sep=';', index=False, header=False, mode='a')
