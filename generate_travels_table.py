@@ -248,7 +248,7 @@ def standard_categories(df):
 
 def evaluate_user_travels(user_id):
 
-    user_trips_df = user_trips_df[user_trips_df['user_id'] == user_id]
+    user_trips_df = df_trips[df_trips['user_id'] == user_id]
     
     qtde_trips = len(user_trips_df['trip_id'].unique())
 
