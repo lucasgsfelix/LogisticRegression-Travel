@@ -19,7 +19,7 @@ def read_chuncks(chuncks):
 if __name__ == '__main__':
 
 
-	pandas_df = read_chuncks(pd.read_csv("users_trips.csv", sep=';', chunksize=1000))
+	pandas_df = pd.read_csv("user_trips_table_plus_home_geo.csv", sep=';')
 	#pandas_df = pd.read_csv("users_trips.csv", sep=';')
 
 	print("Quantidade de linhas antes do dropnat: ", len(pandas_df))
