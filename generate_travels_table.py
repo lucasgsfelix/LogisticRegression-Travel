@@ -85,7 +85,9 @@ def calculate_distance(row, suffix):
 
 
 
-def retrieve_features(df_trip):
+def retrieve_features(trip_id):
+
+    df_trip = df[df['trip_id'] == trip_id]
 
     trip_dict = {}
     
@@ -244,7 +246,9 @@ def standard_categories(df):
     return df
 
 
-def evaluate_user_travels(user_trips_df):
+def evaluate_user_travels(user_id):
+
+    user_trips_df = user_trips_df[user_trips_df['user_id'] == user_id]
     
     qtde_trips = len(user_trips_df['trip_id'].unique())
 
