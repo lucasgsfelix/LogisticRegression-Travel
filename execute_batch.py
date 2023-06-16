@@ -46,18 +46,9 @@ if __name__ == '__main__':
 
 	cut_offs = [cut_off/100 for cut_off in range(50, 105, 5)]
 
-	for cut_off in tqdm.tqdm(cut_offs):
+	for users in tqdm.tqdm(batches):
 
-		print("Current cut_off --> ", cut_off)
-
-		for users in tqdm.tqdm(batches):
-
-			pandas_df[pandas_df['user_id'].isin(users)].to_csv("Datasets/yelp_users_batches_" + str(cut_off) + ".csv", sep=';', index=False)
-
-			subprocess.call("python3 generate_travels_table.py " + str(cut_off), shell=True)
-
-		subprocess.call("python3 train_model.py " + str(cut_off), shell=True)
-
-
-
+		pandas_df[pandas_df['user_id'].isin(users)].to_csv("Datasets/yelp_users_batches_" + str(cut_off) + ".csv", sep=';', index=False)
+	
+		subprocess.call("python3 generate_travels_table.py " + str(cut_off), shell=True)
 
