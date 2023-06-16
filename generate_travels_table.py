@@ -292,6 +292,8 @@ work_cutoff = float(sys.argv[1])
 
 df = pd.read_table("Datasets/yelp_users_batches_" + str(work_cutoff) + ".csv", sep=';')
 
+df = standard_categories(df)
+
 index_predictions = pd.read_table("id_predictions.csv", sep=',').drop('Unnamed: 0', axis=1)
 
 predictions = np.load("y_pred_all.npy")
